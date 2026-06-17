@@ -138,6 +138,23 @@ node prisma/seed.mjs you@your-signup-email.com
 
 Optional: `SEED_LEADS=120` to change the count. Re-running adds more leads.
 
+## Getting real leads (not demo data)
+
+The dashboard has three ways to add leads:
+
+| Button | Data | Notes |
+|--------|------|-------|
+| **✨ Generate demo** | Fake (`@example.com`, DEMO-badged) | For testing/screenshots only |
+| **⬆ Import CSV** | **Real** | Bring a list from anywhere (Apollo export, purchased list, your own). See `examples/sample-leads.csv` for the format. |
+| **🔗 Fetch from Apollo** | **Real** | Pulls real B2B people for the selected category. Requires `APOLLO_API_KEY` + a **paid** Apollo plan (the People Search API is blocked on free). |
+
+Plus an inbound path: share your **capture link** (`/capture/<account-id>`) or POST to
+`/api/leads/inbound` from Zapier / Facebook & Google Lead Ads — real people who
+submit land in your dashboard.
+
+> Only `Generate demo` is fake. Imported, Apollo-fetched, and captured leads are
+> real and are never DEMO-badged.
+
 ## Tests
 
 ```bash

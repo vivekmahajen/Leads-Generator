@@ -123,6 +123,23 @@ export default function LeadDashboard({ categories = [] }) {
     }
   };
 
+  const fetchFromApollo = async () => {
+    const categoryId = filter.category !== 'all' ? filter.category : categories[0];
+    if (!categoryId) { setError('Select a category first (filter or on the Categories page).'); return; }
+    setGenerating(true);
+    setError('');
+    setImportMsg('');
+    try {
+      const result = await api('/api/leads/apollo-fetch', { method: 'POST', body: { category_id: categoryId, count: 25 } });
+      setImportMsg(`Fetched ${result.imported} real lead${result.imported === 1 ? '' : 's'} from Apollo.`);
+      await fetchLeads();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const downloadTemplate = () => {
     const csv = 'first_name,last_name,email,phone,company_name,job_title,city,state,category,notes\n'
       + 'Dana,Reed,dana.reed@northwind.com,+14155550101,Northwind Solar,Owner,San Diego,CA,solar_energy,Wants rooftop quote\n';
@@ -178,6 +195,7 @@ export default function LeadDashboard({ categories = [] }) {
           ⬆ Import CSV
         </button>
         <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onImportFile} />
+        <button className="action-btn" onClick={fetchFromApollo} disabled={generating}>🔗 Fetch from Apollo</button>
         <button className="action-btn" onClick={generateSamples} disabled={generating}>
           {generating ? 'Working…' : '✨ Generate demo'}
         </button>

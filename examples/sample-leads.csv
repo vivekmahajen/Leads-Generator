@@ -1,0 +1,13 @@
+first_name,last_name,email,phone,company_name,job_title,city,state,category,notes
+Dana,Reed,dana.reed@northwindsolar.com,+14155550101,Northwind Solar,Owner,San Diego,CA,solar_energy,"Requested rooftop quote, ready in 30 days"
+Marcus,Lee,marcus.lee@brightpathcrm.com,+15125550148,BrightPath,VP Sales,Austin,TX,saas_software,Evaluating CRM for 40-person team
+Priya,Nair,priya@harborrealtygroup.com,+12135550173,Harbor Realty Group,Managing Broker,Los Angeles,CA,real_estate,Investor seeking multi-family
+Tom,Becker,tom.becker@beckerfinancial.com,+13125550190,Becker Financial,Principal,Chicago,IL,fintech_loans,Small-business loan inquiry
+Sara,Okafor,sara.okafor@guardianbenefits.com,+16465550112,Guardian Benefits,Agency Owner,New York,NY,insurance,Group health for 60 employees
+Diego,Ramos,diego.ramos@summitbuilders.com,+17205550139,Summit Builders,Project Manager,Denver,CO,construction,Commercial buildout Q3
+Hannah,Wells,hannah.wells@evergreenwellness.com,+12065550127,Evergreen Wellness,Founder,Seattle,WA,fitness_wellness,Opening second studio
+Victor,Chen,victor.chen@apexlogistics.com,+14695550184,Apex Logistics,Operations Director,Dallas,TX,logistics,Needs 3PL for ecommerce
+Olivia,Grant,olivia.grant@brightsmilesdental.com,+16175550155,Bright Smiles Dental,Practice Owner,Boston,MA,healthcare,Adding a second location
+Noah,Patel,noah.patel@quantumads.com,+14045550166,Quantum Ads,CEO,Atlanta,GA,digital_marketing,Wants PPC + SEO retainer
+Emma,Russo,emma.russo@coastalevents.com,+13055550178,Coastal Events,Owner,Miami,FL,wedding_events,Booking venue + catering for 200
+Liam,Foster,liam.foster@greenfieldagtech.com,+15155550193,Greenfield AgTech,Founder,Des Moines,IA,agriculture,Evaluating farm-management software
