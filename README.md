@@ -123,6 +123,21 @@ whether the database is reachable and migrated. On serverless hosts (e.g. Vercel
 where `start` isn't used, run migrations in the build step or once via
 `npx prisma migrate deploy` against `DATABASE_URL`.
 
+## Seeding sample leads onto your account
+
+`prisma/seed.mjs` attaches ~60 sample leads to an **existing** user (by email),
+so your live dashboard shows data. It never changes the user's password.
+
+```bash
+# Use the SAME connection strings your deploy uses (copy from Vercel/Supabase env).
+# The direct (non-pooling) URL is best for a one-off script.
+POSTGRES_PRISMA_URL="postgresql://...supabase..." \
+POSTGRES_URL_NON_POOLING="postgresql://...supabase..." \
+node prisma/seed.mjs you@your-signup-email.com
+```
+
+Optional: `SEED_LEADS=120` to change the count. Re-running adds more leads.
+
 ## Tests
 
 ```bash
