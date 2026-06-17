@@ -13,6 +13,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { makeLead, makeDeliveryMeta } from '../lib/sampleData.js';
 
 const db = new PrismaClient();
 
@@ -20,14 +21,6 @@ const TARGET_EMAIL = (process.argv[2] || process.env.SEED_EMAIL || 'demo@leadfor
   .toLowerCase()
   .trim();
 const LEAD_COUNT = Number(process.env.SEED_LEADS || 60);
-
-const FIRST = ['Aarav', 'Diya', 'Vivaan', 'Ananya', 'Reyansh', 'Isha', 'Kabir', 'Myra', 'Arjun', 'Sara'];
-const LAST = ['Sharma', 'Patel', 'Reddy', 'Iyer', 'Nair', 'Khan', 'Gupta', 'Mehta', 'Singh', 'Rao'];
-const CITIES = [['Mumbai', 'MH'], ['Bengaluru', 'KA'], ['Delhi', 'DL'], ['Chennai', 'TN'], ['Pune', 'MH'], ['Hyderabad', 'TS']];
-const SOURCES = ['google_ads', 'facebook', 'organic', 'linkedin'];
-const STATUSES = ['new', 'new', 'contacted', 'qualified', 'converted', 'rejected'];
-
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 async function resolveUser() {
   const existing = await db.user.findUnique({ where: { email: TARGET_EMAIL } });
@@ -79,34 +72,12 @@ async function main() {
   });
 
   // Create the sample leads + deliveries
+  const choose = (arr) => arr[Math.floor(Math.random() * arr.length)];
   for (let i = 0; i < LEAD_COUNT; i++) {
-    const categoryId = pick(categoryIds);
-    const [city, state] = pick(CITIES);
-    const first = pick(FIRST);
-    const last = pick(LAST);
-    const lead = await db.lead.create({
-      data: {
-        categoryId,
-        firstName: first,
-        lastName: last,
-        email: `${first}.${last}${i}@example.com`.toLowerCase(),
-        phone: `+9198${Math.floor(10000000 + Math.random() * 89999999)}`,
-        companyName: Math.random() > 0.5 ? `${last} Enterprises` : null,
-        jobTitle: pick(['Owner', 'Manager', 'Director', 'Buyer', 'Founder']),
-        city,
-        state,
-        intentScore: Math.floor(20 + Math.random() * 80),
-        source: pick(SOURCES),
-      },
-    });
+    const categoryId = choose(categoryIds);
+    const lead = await db.lead.create({ data: makeLead(categoryId, String(i)) });
     await db.leadDelivery.create({
-      data: {
-        leadId: lead.id,
-        userId: user.id,
-        categoryId,
-        status: pick(STATUSES),
-        deliveredAt: new Date(Date.now() - Math.floor(Math.random() * 25) * 24 * 60 * 60 * 1000),
-      },
+      data: { leadId: lead.id, userId: user.id, categoryId, ...makeDeliveryMeta() },
     });
   }
 
