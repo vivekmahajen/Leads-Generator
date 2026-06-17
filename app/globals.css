@@ -298,6 +298,17 @@ button { font-family: inherit; }
   border-radius: 8px; padding: 9px 13px; font-size: 12px; color: #fcd34d; margin-bottom: 14px;
 }
 
+/* ── CONTACT REVIEW ───────────────────────────────────────────── */
+.platform-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+.platform-pill.linkedin { background: rgba(10,102,194,0.15); color: #5aa9ff; }
+.platform-pill.twitter  { background: rgba(255,255,255,0.08); color: #e7e9ea; }
+.tweet-preview { font-size: 12px; color: var(--muted); max-width: 280px; font-style: italic; }
+.score-badge { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.score-danger    { background: rgba(239,68,68,0.14); color: #fca5a5; }
+.score-warning   { background: rgba(245,158,11,0.14); color: #fbbf24; }
+.score-info      { background: rgba(99,102,241,0.14); color: var(--accent2); }
+.score-secondary { background: rgba(255,255,255,0.06); color: var(--muted); }
+
 /* ── CAPTURE PANEL ────────────────────────────────────────────── */
 .capture-panel {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;

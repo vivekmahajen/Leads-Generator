@@ -146,11 +146,30 @@ The dashboard has three ways to add leads:
 |--------|------|-------|
 | **✨ Generate demo** | Fake (`@example.com`, DEMO-badged) | For testing/screenshots only |
 | **⬆ Import CSV** | **Real** | Bring a list from anywhere (Apollo export, purchased list, your own). See `examples/sample-leads.csv` for the format. |
-| **🔗 Fetch from Apollo** | **Real** | Pulls real B2B people for the selected category. Requires `APOLLO_API_KEY` + a **paid** Apollo plan (the People Search API is blocked on free). |
+| **Find contacts** (page) | **Real** | LinkedIn + X/Twitter extraction → review → promote. See below. |
 
 Plus an inbound path: share your **capture link** (`/capture/<account-id>`) or POST to
 `/api/leads/inbound` from Zapier / Facebook & Google Lead Ads — real people who
 submit land in your dashboard.
+
+### Find contacts (LinkedIn + X/Twitter)
+
+The **Find contacts** page runs an extraction → enrichment → review → promote pipeline:
+
+- **𝕏 Run intent search** — searches X/Twitter for buying-intent posts per category
+  and ingests the authors as scored contacts. *Requires `TWITTER_BEARER_TOKEN`; the
+  recent-search API needs a **paid** X plan (the free tier is write-only).*
+- **💼 Upload LinkedIn CSV** — import a LinkedIn export (produced by a Chrome
+  extension like Skrapp/Derrick or PhantomBuster — direct automated scraping
+  violates LinkedIn's ToS). Contacts are normalized, deduped, and scored.
+- **Find email** — email enrichment waterfall: Hunter.io (25/mo) → Snov.io (50/mo)
+  → pattern guess + MX verify. Set `HUNTER_API_KEY`, `SNOV_CLIENT_ID/SECRET`.
+- **Promote to leads** — push reviewed contacts into the leads pipeline.
+- **Saved searches + cron** — `POST /api/saved-searches`; the Vercel cron at
+  `/api/cron/twitter-monitor` (every 6h, guarded by `CRON_SECRET`) re-runs them.
+
+All of these env vars are optional — features degrade with a clear message when a
+key is missing.
 
 > Only `Generate demo` is fake. Imported, Apollo-fetched, and captured leads are
 > real and are never DEMO-badged.
