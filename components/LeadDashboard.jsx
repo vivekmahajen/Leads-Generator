@@ -152,6 +152,13 @@ export default function LeadDashboard({ categories = [] }) {
 
       {error && <div className="form-error">{error}</div>}
 
+      {leads.some((l) => l.source === 'demo_sample') && (
+        <div className="demo-hint">
+          ⚠️ Rows marked <strong>DEMO</strong> are sample data (note the <code>@example.com</code> addresses) — not real leads.
+          Click <strong>🗑 Clear leads</strong> to remove them, then share your capture link above to collect real ones.
+        </div>
+      )}
+
       {/* Lead table */}
       <div className="lead-table-wrap">
         <table className="lead-table">
@@ -171,7 +178,10 @@ export default function LeadDashboard({ categories = [] }) {
             {leads.map((lead) => (
               <tr key={lead.id}>
                 <td>
-                  <div className="lead-name">{lead.first_name} {lead.last_name}</div>
+                  <div className="lead-name">
+                    {lead.first_name} {lead.last_name}
+                    {lead.source === 'demo_sample' && <span className="demo-badge" title="Sample data, not a real lead">DEMO</span>}
+                  </div>
                   <div className="lead-company">{lead.company_name || lead.job_title}</div>
                 </td>
                 <td><span className="lead-cat-badge">{getCategory(lead.category_id)?.name || lead.category_id?.replace(/_/g, ' ')}</span></td>

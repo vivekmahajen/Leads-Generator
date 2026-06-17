@@ -53,6 +53,7 @@ async function handler(req, res) {
     city: d.lead?.city,
     state: d.lead?.state,
     intent_score: d.lead?.intentScore ?? 0,
+    source: d.lead?.source,
     status: d.status,
     delivered_at: d.deliveredAt,
   }));
