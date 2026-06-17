@@ -1,6 +1,7 @@
 // pages/api/billing/webhook.js
 // Stripe webhook handler — provisions subscriptions on checkout completion and
 // keeps status in sync with Stripe lifecycle events.
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getStripe } from '@/lib/stripe';
 
@@ -13,7 +14,7 @@ async function readRawBody(req) {
   return Buffer.concat(chunks);
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const stripe = getStripe();
@@ -99,3 +100,5 @@ async function provisionSubscription(session) {
     data: { subscriptionId: subscription.id, active: true },
   });
 }
+
+export default withErrorHandler(handler);

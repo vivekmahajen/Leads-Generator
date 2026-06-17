@@ -1,8 +1,9 @@
 // pages/api/leads/[id]/replace.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -29,3 +30,5 @@ export default async function handler(req, res) {
     message: 'Replacement requested. A new qualified lead will be delivered within 24 hours.',
   });
 }
+
+export default withErrorHandler(handler);

@@ -1,11 +1,12 @@
 // pages/api/auth/signup.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { signToken } from '@/lib/auth';
 import { sendVerificationEmail, sendWelcomeEmail } from '@/lib/email';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const { email, phone, full_name, company_name, company_size, role, password } = req.body || {};
@@ -81,3 +82,5 @@ export default async function handler(req, res) {
     },
   });
 }
+
+export default withErrorHandler(handler);

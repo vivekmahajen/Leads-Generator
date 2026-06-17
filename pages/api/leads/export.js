@@ -1,6 +1,7 @@
 // pages/api/leads/export.js
 // Stream the user's leads as a CSV download. Auth via Bearer header or ?auth=
 // query param (the export link can't set headers).
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 
@@ -11,7 +12,7 @@ function csvEscape(value) {
   return str;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -41,3 +42,5 @@ export default async function handler(req, res) {
   res.setHeader('Content-Disposition', `attachment; filename="leadforge-leads-${Date.now()}.csv"`);
   return res.status(200).send(csv);
 }
+
+export default withErrorHandler(handler);

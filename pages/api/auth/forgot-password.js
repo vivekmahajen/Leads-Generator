@@ -1,9 +1,10 @@
 // pages/api/auth/forgot-password.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { sendPasswordResetOTP } from '@/lib/email';
 import { rateLimit } from '@/lib/rateLimit';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const { email } = req.body || {};
@@ -44,3 +45,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json(genericResponse);
 }
+
+export default withErrorHandler(handler);

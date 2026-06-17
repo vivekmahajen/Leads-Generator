@@ -1,4 +1,5 @@
 // pages/api/auth/login.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { signToken } from '@/lib/auth';
@@ -7,7 +8,7 @@ import { signToken } from '@/lib/auth';
 // response time doesn't reveal whether an account exists.
 const DUMMY_HASH = '$2a$12$C6UzMDM.H6dfI/f/IKcEeO3K1l9lJ8VtkX5xQ8Z3Yk5pVxh1Q3l3K';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const { identifier, password } = req.body || {};
@@ -64,3 +65,5 @@ export default async function handler(req, res) {
       : null,
   });
 }
+
+export default withErrorHandler(handler);

@@ -1,11 +1,12 @@
 // pages/api/billing/create-checkout.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 import { getStripe } from '@/lib/stripe';
 import { calculatePrice } from '@/lib/pricing';
 import { CATEGORY_MAP } from '@/lib/categories';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -70,3 +71,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ checkout_url: session.url });
 }
+
+export default withErrorHandler(handler);

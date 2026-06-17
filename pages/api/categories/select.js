@@ -1,11 +1,12 @@
 // pages/api/categories/select.js
 // Update the user's selected categories + recalculate pricing for checkout.
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 import { calculatePrice } from '@/lib/pricing';
 import { CATEGORY_MAP } from '@/lib/categories';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'PUT') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -48,3 +49,5 @@ export default async function handler(req, res) {
     },
   });
 }
+
+export default withErrorHandler(handler);

@@ -1,8 +1,9 @@
 // pages/api/auth/reset-password.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
 
   const { email, otp, new_password } = req.body || {};
@@ -46,3 +47,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ message: 'Password updated successfully. You can now log in.' });
 }
+
+export default withErrorHandler(handler);

@@ -1,6 +1,7 @@
 // pages/api/leads/index.js
 // List the authenticated user's delivered leads with filtering, pagination
 // and aggregate stats for the dashboard KPI strip.
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 import { getCategory } from '@/lib/categories';
@@ -14,7 +15,7 @@ function parseDealValue(avgDealSize) {
   return match ? Number(match[1]) : 0;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -89,3 +90,5 @@ export default async function handler(req, res) {
     },
   });
 }
+
+export default withErrorHandler(handler);

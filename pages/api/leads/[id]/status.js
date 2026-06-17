@@ -1,10 +1,11 @@
 // pages/api/leads/[id]/status.js
+import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { getUserFromToken } from '@/lib/auth';
 
 const VALID_STATUSES = ['new', 'contacted', 'qualified', 'converted', 'rejected'];
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'PATCH') return res.status(405).json({ message: 'Method not allowed' });
 
   const user = await getUserFromToken(req);
@@ -24,3 +25,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ id: delivery.id, status });
 }
+
+export default withErrorHandler(handler);
