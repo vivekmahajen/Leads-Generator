@@ -1,0 +1,27 @@
+{
+  "name": "leadforge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LeadForge — AI Lead Generation Platform with category-based pricing",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "stripe": "^16.2.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.17.0",
+    "prisma": "^5.17.0"
+  }
+}

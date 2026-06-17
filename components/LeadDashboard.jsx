@@ -1,0 +1,154 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+import { api, getToken } from '@/lib/client';
+import { getCategory } from '@/lib/categories';
+
+export default function LeadDashboard({ categories = [] }) {
+  const [leads, setLeads] = useState([]);
+  const [stats, setStats] = useState({ total: 0, thisMonth: 0, converted: 0, pipeline: 0 });
+  const [pagination, setPagination] = useState({ page: 1, pages: 1 });
+  const [filter, setFilter] = useState({ category: 'all', status: 'all', page: 1 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchLeads = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({
+        category: filter.category,
+        status: filter.status,
+        page: String(filter.page),
+      });
+      const data = await api(`/api/leads?${params}`);
+      setLeads(data.leads || []);
+      setStats(data.stats || { total: 0, thisMonth: 0, converted: 0, pipeline: 0 });
+      setPagination(data.pagination || { page: 1, pages: 1 });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  const updateStatus = async (leadId, newStatus) => {
+    await api(`/api/leads/${leadId}/status`, { method: 'PATCH', body: { status: newStatus } });
+    fetchLeads();
+  };
+
+  const requestReplacement = async (leadId) => {
+    await api(`/api/leads/${leadId}/replace`, { method: 'POST', body: { reason: 'not_qualified' } });
+    fetchLeads();
+  };
+
+  const exportCSV = () => {
+    window.location.href = `/api/leads/export?auth=${getToken()}`;
+  };
+
+  const setF = (k, v) => setFilter((p) => ({ ...p, [k]: v, page: k === 'page' ? v : 1 }));
+
+  return (
+    <div className="lead-dashboard">
+      {/* KPI Strip */}
+      <div className="kpi-strip">
+        <div className="kpi"><div className="kpi-n">{stats.total}</div><div className="kpi-l">Total leads</div></div>
+        <div className="kpi"><div className="kpi-n">{stats.thisMonth}</div><div className="kpi-l">This month</div></div>
+        <div className="kpi"><div className="kpi-n">{stats.converted}</div><div className="kpi-l">Converted</div></div>
+        <div className="kpi"><div className="kpi-n">${Number(stats.pipeline).toLocaleString()}</div><div className="kpi-l">Pipeline value</div></div>
+      </div>
+
+      {/* Filters + Export */}
+      <div className="lead-filter-bar">
+        <select value={filter.category} onChange={(e) => setF('category', e.target.value)}>
+          <option value="all">All categories</option>
+          {categories.map((id) => (
+            <option key={id} value={id}>{getCategory(id)?.name || id}</option>
+          ))}
+        </select>
+        <select value={filter.status} onChange={(e) => setF('status', e.target.value)}>
+          <option value="all">All statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="qualified">Qualified</option>
+          <option value="converted">Converted</option>
+        </select>
+        <button className="export-btn" onClick={exportCSV}>⬇ Export CSV</button>
+      </div>
+
+      {error && <div className="form-error">{error}</div>}
+
+      {/* Lead table */}
+      <div className="lead-table-wrap">
+        <table className="lead-table">
+          <thead>
+            <tr>
+              <th>Lead</th>
+              <th>Category</th>
+              <th>Contact</th>
+              <th>Location</th>
+              <th>Intent Score</th>
+              <th>Received</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map((lead) => (
+              <tr key={lead.id}>
+                <td>
+                  <div className="lead-name">{lead.first_name} {lead.last_name}</div>
+                  <div className="lead-company">{lead.company_name || lead.job_title}</div>
+                </td>
+                <td><span className="lead-cat-badge">{getCategory(lead.category_id)?.name || lead.category_id?.replace(/_/g, ' ')}</span></td>
+                <td>
+                  <div>{lead.email}</div>
+                  <div className="lead-phone">{lead.phone}</div>
+                </td>
+                <td>{[lead.city, lead.state].filter(Boolean).join(', ')}</td>
+                <td>
+                  <span className={`intent-bar ${lead.intent_score > 70 ? 'high' : lead.intent_score > 40 ? 'med' : 'low'}`}>
+                    {lead.intent_score}/100
+                  </span>
+                </td>
+                <td>{new Date(lead.delivered_at).toLocaleDateString()}</td>
+                <td>
+                  <select value={lead.status} onChange={(e) => updateStatus(lead.id, e.target.value)} className="status-select">
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="converted">Converted ✓</option>
+                    <option value="rejected">Not relevant</option>
+                  </select>
+                </td>
+                <td>
+                  <button className="action-btn" onClick={() => requestReplacement(lead.id)}>Replace</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {leads.length === 0 && !loading && (
+        <div className="empty-leads">
+          <div className="empty-icon">🎯</div>
+          <div>No leads yet. Your first batch will arrive within 24 hours of subscribing.</div>
+        </div>
+      )}
+
+      {loading && <div className="spinner-wrap">Loading leads…</div>}
+
+      {pagination.pages > 1 && (
+        <div className="pagination">
+          <button className="ghost-btn" disabled={filter.page <= 1} onClick={() => setF('page', filter.page - 1)}>← Prev</button>
+          <span>Page {pagination.page} of {pagination.pages}</span>
+          <button className="ghost-btn" disabled={filter.page >= pagination.pages} onClick={() => setF('page', filter.page + 1)}>Next →</button>
+        </div>
+      )}
+    </div>
+  );
+}

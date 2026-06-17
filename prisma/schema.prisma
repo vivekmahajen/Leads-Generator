@@ -1,0 +1,126 @@
+// LeadForge — Prisma schema (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(uuid()) @db.Uuid
+  email              String    @unique @db.VarChar(255)
+  phone              String?   @unique @db.VarChar(15)
+  fullName           String    @map("full_name") @db.VarChar(100)
+  companyName        String?   @map("company_name") @db.VarChar(100)
+  companySize        String?   @map("company_size") @db.VarChar(20)
+  role               String?   @db.VarChar(50)
+  passwordHash       String    @map("password_hash")
+  emailVerified      Boolean   @default(false) @map("email_verified")
+  emailVerifyToken   String?   @map("email_verify_token") @db.VarChar(64)
+  otpCode            String?   @map("otp_code") @db.VarChar(6)
+  otpExpiresAt       DateTime? @map("otp_expires_at") @db.Timestamptz(6)
+  onboardingComplete Boolean   @default(false) @map("onboarding_complete")
+  stripeCustomerId   String?   @map("stripe_customer_id")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  subscriptions  Subscription[]
+  categories     UserCategory[]
+  deliveries     LeadDelivery[]
+  passwordResets PasswordReset[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id                   String    @id @default(uuid()) @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  tierId               String    @map("tier_id") @db.VarChar(20)
+  billingCycle         String    @map("billing_cycle") @db.VarChar(10)
+  categoryCount        Int       @map("category_count")
+  monthlyPrice         Decimal?  @map("monthly_price") @db.Decimal(10, 2)
+  status               String    @default("active") @db.VarChar(20)
+  stripeSubscriptionId String?   @map("stripe_subscription_id")
+  stripeCustomerId     String?   @map("stripe_customer_id")
+  currentPeriodStart   DateTime? @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd     DateTime? @map("current_period_end") @db.Timestamptz(6)
+  cancelledAt          DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories UserCategory[]
+
+  @@map("subscriptions")
+}
+
+model UserCategory {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  subscriptionId String?  @map("subscription_id") @db.Uuid
+  categoryId     String   @map("category_id") @db.VarChar(50)
+  customFilters  Json?    @map("custom_filters")
+  active         Boolean  @default(true)
+  addedAt        DateTime @default(now()) @map("added_at") @db.Timestamptz(6)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@unique([userId, categoryId])
+  @@map("user_categories")
+}
+
+model Lead {
+  id                String   @id @default(uuid()) @db.Uuid
+  categoryId        String   @map("category_id") @db.VarChar(50)
+  firstName         String?  @map("first_name") @db.VarChar(100)
+  lastName          String?  @map("last_name") @db.VarChar(100)
+  email             String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(15)
+  companyName       String?  @map("company_name") @db.VarChar(100)
+  jobTitle          String?  @map("job_title") @db.VarChar(100)
+  city              String?  @db.VarChar(50)
+  state             String?  @db.VarChar(50)
+  country           String?  @default("IN") @db.VarChar(50)
+  qualificationData Json?    @map("qualification_data")
+  intentScore       Int?     @map("intent_score")
+  source            String?  @db.VarChar(50)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  deliveries LeadDelivery[]
+
+  @@map("leads")
+}
+
+model LeadDelivery {
+  id                   String   @id @default(uuid()) @db.Uuid
+  leadId               String   @map("lead_id") @db.Uuid
+  userId               String   @map("user_id") @db.Uuid
+  categoryId           String?  @map("category_id") @db.VarChar(50)
+  deliveredAt          DateTime @default(now()) @map("delivered_at") @db.Timestamptz(6)
+  status               String   @default("new") @db.VarChar(20)
+  rejectionReason      String?  @map("rejection_reason") @db.VarChar(100)
+  replacementRequested Boolean  @default(false) @map("replacement_requested")
+  notes                String?
+
+  lead Lead @relation(fields: [leadId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("lead_deliveries")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  otpCode   String    @map("otp_code") @db.VarChar(6)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
