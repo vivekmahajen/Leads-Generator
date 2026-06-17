@@ -22,6 +22,7 @@ async function handler(req, res) {
   if (min > 0) where.intentScore = { gte: min };
   if (emailStatus === 'verified') where.emailVerified = true;
   else if (emailStatus === 'found') where.email = { not: null };
+  else if (emailStatus === 'phone') where.phone = { not: null };
   else if (emailStatus === 'pending') where.email = null;
   const term = String(q).trim();
   if (term) {

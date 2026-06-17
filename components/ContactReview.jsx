@@ -5,7 +5,7 @@ import { getScoreLabel } from '@/lib/scoring';
 import { getCategory, CATEGORIES } from '@/lib/categories';
 import { parseCSV } from '@/lib/csv';
 
-const PLATFORM_LABEL = { osm: '📍 Local business', linkedin: '💼 LinkedIn', twitter: '𝕏 Twitter' };
+const PLATFORM_LABEL = { osm: '📍 Local business', npi: '🏥 NPI provider', linkedin: '💼 LinkedIn', twitter: '𝕏 Twitter' };
 
 export default function ContactReview({ categories = [] }) {
   const [contacts, setContacts] = useState([]);
@@ -49,6 +49,17 @@ export default function ContactReview({ categories = [] }) {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
 
+  const runNpi = async () => {
+    if (!location.trim()) { setError('Enter a location with a state, e.g. "Los Angeles, CA".'); return; }
+    setBusy(true); setMsg(''); setError('');
+    try {
+      const r = await api('/api/scrape/npi/search', { method: 'POST', body: { category_id: category, location } });
+      setFilter((p) => ({ ...p, emailStatus: 'phone' })); // NPI people have phone, no email
+      setMsg(`Found ${r.found} providers in ${[r.city, r.state].filter(Boolean).join(', ')} — ${r.added} new. NPI has phone + name (no emails).`);
+      await fetchContacts();
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  };
+
   const onUpload = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -87,8 +98,8 @@ export default function ContactReview({ categories = [] }) {
     <div className="lead-dashboard">
       <div className="capture-panel">
         <div>
-          <div className="capture-title">Find real businesses — free</div>
-          <div className="capture-sub">Pull real local businesses (name, phone, website, address) from OpenStreetMap by category + location. No API key, no cost. Or upload a LinkedIn export. Everything is scored, deduped, and lands here for review.</div>
+          <div className="capture-title">Find real contacts — free</div>
+          <div className="capture-sub">📍 Businesses (name, phone, website) from OpenStreetMap, or 🏥 named people (social workers, case managers) from the CMS NPI Registry — by category + US location. No API key. NPI gives name + phone (no email). Or upload a LinkedIn export. All scored, deduped, ready to review.</div>
         </div>
         <div className="capture-actions" style={{ flexWrap: 'wrap' }}>
           <select className="status-select" value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -96,6 +107,7 @@ export default function ContactReview({ categories = [] }) {
           </select>
           <input className="cat-search" style={{ minWidth: 160 }} placeholder="City, State" value={location} onChange={(e) => setLocation(e.target.value)} />
           <button className="action-btn" onClick={runLocal} disabled={busy}>📍 Find businesses</button>
+          <button className="action-btn" onClick={runNpi} disabled={busy}>🏥 Find people (NPI)</button>
           <button className="action-btn" onClick={() => fileRef.current?.click()} disabled={busy}>💼 Upload LinkedIn CSV</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onUpload} />
         </div>
@@ -109,6 +121,7 @@ export default function ContactReview({ categories = [] }) {
         <select value={filter.platform} onChange={(e) => setFilter((p) => ({ ...p, platform: e.target.value }))}>
           <option value="all">All sources</option>
           <option value="osm">📍 Local business</option>
+          <option value="npi">🏥 NPI provider</option>
           <option value="linkedin">💼 LinkedIn</option>
         </select>
         <select value={filter.state} onChange={(e) => setFilter((p) => ({ ...p, state: e.target.value }))}>
@@ -127,8 +140,9 @@ export default function ContactReview({ categories = [] }) {
         </select>
         <select value={filter.emailStatus} onChange={(e) => setFilter((p) => ({ ...p, emailStatus: e.target.value }))}>
           <option value="found">Has email</option>
+          <option value="phone">Has phone</option>
           <option value="verified">Email verified</option>
-          <option value="all">All (incl. no email)</option>
+          <option value="all">All</option>
           <option value="pending">No email yet</option>
         </select>
         {selected.size > 0 && (
@@ -168,7 +182,9 @@ export default function ContactReview({ categories = [] }) {
                   <td>
                     {c.email
                       ? <div><div>{c.email}</div><div className="lead-company">{c.emailSource} · {c.emailVerified ? '✓ verified' : 'unverified'}</div></div>
-                      : <button className="action-btn" onClick={() => enrich(c.id)} disabled={busy}>Find email</button>}
+                      : c.phone
+                        ? <div><div>{c.phone}</div><div className="lead-company">phone {c.companyDomain ? '' : '· no email available'}</div></div>
+                        : <button className="action-btn" onClick={() => enrich(c.id)} disabled={busy}>Find email</button>}
                   </td>
                   <td><span className={`score-badge score-${s.color}`}>{c.intentScore} · {s.label}</span></td>
                   <td>{c.profileUrl ? <a className="action-btn" href={c.profileUrl} target="_blank" rel="noreferrer">View ↗</a> : '—'}</td>
