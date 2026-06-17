@@ -42,7 +42,7 @@ export default function ContactReview({ categories = [] }) {
     setBusy(true); setMsg(''); setError('');
     try {
       const r = await api('/api/scrape/local/search', { method: 'POST', body: { category_id: category, location } });
-      setMsg(`Scanned ${r.scanned} businesses near ${r.location || location}; ${r.withEmail} had a public email — ${r.added} new, ${r.duplicates} already had.${r.withEmail === 0 ? ' Try another category or a larger city.' : ''}`);
+      setMsg(`Scanned ${r.scanned} businesses near ${r.location || location}; ${r.withEmail} emailable (${r.listed} listed, ${r.guessed} guessed info@) — ${r.added} new, ${r.duplicates} already had.${r.withEmail === 0 ? ' Try another category or a larger city.' : ''}`);
       await fetchContacts();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
@@ -67,10 +67,12 @@ export default function ContactReview({ categories = [] }) {
     catch (err) { setError(err.message); } finally { setBusy(false); }
   };
 
-  const promote = async () => {
+  const promote = async (ids) => {
+    const contactIds = ids || [...selected];
+    if (!contactIds.length) return;
     setBusy(true); setMsg(''); setError('');
     try {
-      const r = await api('/api/contacts/promote', { method: 'POST', body: { contactIds: [...selected] } });
+      const r = await api('/api/contacts/promote', { method: 'POST', body: { contactIds } });
       setMsg(`Promoted ${r.promoted} contact(s) to the leads pipeline.`);
       setSelected(new Set());
       await fetchContacts();
@@ -119,7 +121,12 @@ export default function ContactReview({ categories = [] }) {
           <option value="pending">No email yet</option>
         </select>
         {selected.size > 0 && (
-          <button className="export-btn" onClick={promote} disabled={busy}>→ Promote {selected.size} to leads</button>
+          <button className="export-btn" onClick={() => promote()} disabled={busy}>→ Promote {selected.size} to leads</button>
+        )}
+        {contacts.length > 0 && (
+          <button className="action-btn" style={{ marginLeft: selected.size > 0 ? 0 : 'auto' }} onClick={() => promote(contacts.map((c) => c.id))} disabled={busy}>
+            → Promote all {contacts.length}
+          </button>
         )}
       </div>
 
