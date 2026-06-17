@@ -10,6 +10,7 @@ export default function LeadDashboard({ categories = [] }) {
   const [filter, setFilter] = useState({ category: 'all', status: 'all', page: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -47,6 +48,22 @@ export default function LeadDashboard({ categories = [] }) {
 
   const exportCSV = () => {
     window.location.href = `/api/leads/export?auth=${getToken()}`;
+  };
+
+  const generateSamples = async () => {
+    setGenerating(true);
+    setError('');
+    try {
+      await api('/api/leads/generate', {
+        method: 'POST',
+        body: { count: 40, category_ids: categories },
+      });
+      await fetchLeads();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const setF = (k, v) => setFilter((p) => ({ ...p, [k]: v, page: k === 'page' ? v : 1 }));
@@ -137,6 +154,10 @@ export default function LeadDashboard({ categories = [] }) {
         <div className="empty-leads">
           <div className="empty-icon">🎯</div>
           <div>No leads yet. Your first batch will arrive within 24 hours of subscribing.</div>
+          <button className="primary-btn" style={{ width: 'auto', marginTop: 18, padding: '10px 20px' }} onClick={generateSamples} disabled={generating}>
+            {generating ? 'Generating…' : '✨ Generate sample leads'}
+          </button>
+          <div className="page-sub" style={{ marginTop: 8 }}>Populates your dashboard with demo leads so you can explore the product.</div>
         </div>
       )}
 
