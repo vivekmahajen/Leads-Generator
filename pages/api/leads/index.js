@@ -21,12 +21,27 @@ async function handler(req, res) {
   const user = await getUserFromToken(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { category = 'all', status = 'all', page = '1' } = req.query;
+  const { category = 'all', status = 'all', state = 'all', city = 'all', q = '', page = '1' } = req.query;
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
 
   const where = { userId: user.id };
   if (category !== 'all') where.categoryId = category;
   if (status !== 'all') where.status = status;
+
+  // Filters that live on the related lead (state/city/search).
+  const leadWhere = {};
+  if (state !== 'all') leadWhere.state = state;
+  if (city !== 'all') leadWhere.city = city;
+  const term = String(q).trim();
+  if (term) {
+    leadWhere.OR = [
+      { firstName: { contains: term, mode: 'insensitive' } },
+      { lastName: { contains: term, mode: 'insensitive' } },
+      { companyName: { contains: term, mode: 'insensitive' } },
+      { email: { contains: term, mode: 'insensitive' } },
+    ];
+  }
+  if (Object.keys(leadWhere).length) where.lead = leadWhere;
 
   const [deliveries, total] = await Promise.all([
     db.leadDelivery.findMany({
@@ -71,6 +86,8 @@ async function handler(req, res) {
   let converted = 0;
   let thisMonth = 0;
   let pipeline = 0;
+  const stateSet = new Set();
+  const citySet = new Set();
   for (const d of allForStats) {
     if (d.status === 'converted') converted += 1;
     if (d.deliveredAt >= startOfMonth) thisMonth += 1;
@@ -78,11 +95,17 @@ async function handler(req, res) {
       const cat = getCategory(d.categoryId || d.lead?.categoryId);
       pipeline += parseDealValue(cat?.avgDealSize);
     }
+    if (d.lead?.state) stateSet.add(d.lead.state);
+    if (d.lead?.city) citySet.add(d.lead.city);
   }
 
   return res.status(200).json({
     leads,
     pagination: { page: pageNum, pageSize: PAGE_SIZE, total, pages: Math.ceil(total / PAGE_SIZE) },
+    facets: {
+      states: [...stateSet].sort(),
+      cities: [...citySet].sort(),
+    },
     stats: {
       total: allForStats.length,
       thisMonth,

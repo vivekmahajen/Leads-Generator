@@ -7,7 +7,8 @@ export default function LeadDashboard({ categories = [] }) {
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState({ total: 0, thisMonth: 0, converted: 0, pipeline: 0 });
   const [pagination, setPagination] = useState({ page: 1, pages: 1 });
-  const [filter, setFilter] = useState({ category: 'all', status: 'all', page: 1 });
+  const [facets, setFacets] = useState({ states: [], cities: [] });
+  const [filter, setFilter] = useState({ category: 'all', status: 'all', state: 'all', city: 'all', q: '', page: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -38,10 +39,14 @@ export default function LeadDashboard({ categories = [] }) {
       const params = new URLSearchParams({
         category: filter.category,
         status: filter.status,
+        state: filter.state,
+        city: filter.city,
+        q: filter.q,
         page: String(filter.page),
       });
       const data = await api(`/api/leads?${params}`);
       setLeads(data.leads || []);
+      if (data.facets) setFacets(data.facets);
       setStats(data.stats || { total: 0, thisMonth: 0, converted: 0, pipeline: 0 });
       setPagination(data.pagination || { page: 1, pages: 1 });
     } catch (err) {
@@ -161,11 +166,26 @@ export default function LeadDashboard({ categories = [] }) {
 
       {/* Filters + Export */}
       <div className="lead-filter-bar">
+        <input
+          className="cat-search"
+          style={{ minWidth: 180 }}
+          placeholder="Search name, company, email…"
+          value={filter.q}
+          onChange={(e) => setF('q', e.target.value)}
+        />
         <select value={filter.category} onChange={(e) => setF('category', e.target.value)}>
           <option value="all">All categories</option>
           {categories.map((id) => (
             <option key={id} value={id}>{getCategory(id)?.name || id}</option>
           ))}
+        </select>
+        <select value={filter.state} onChange={(e) => setF('state', e.target.value)}>
+          <option value="all">All states</option>
+          {facets.states.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filter.city} onChange={(e) => setF('city', e.target.value)}>
+          <option value="all">All cities</option>
+          {facets.cities.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={filter.status} onChange={(e) => setF('status', e.target.value)}>
           <option value="all">All statuses</option>
@@ -211,7 +231,8 @@ export default function LeadDashboard({ categories = [] }) {
               <th>Lead</th>
               <th>Category</th>
               <th>Contact</th>
-              <th>Location</th>
+              <th>City</th>
+              <th>State</th>
               <th>Intent Score</th>
               <th>Received</th>
               <th>Status</th>
@@ -233,7 +254,8 @@ export default function LeadDashboard({ categories = [] }) {
                   <div>{lead.email}</div>
                   <div className="lead-phone">{lead.phone}</div>
                 </td>
-                <td>{[lead.city, lead.state].filter(Boolean).join(', ')}</td>
+                <td>{lead.city || '—'}</td>
+                <td>{lead.state || '—'}</td>
                 <td>
                   <span className={`intent-bar ${lead.intent_score > 70 ? 'high' : lead.intent_score > 40 ? 'med' : 'low'}`}>
                     {lead.intent_score}/100
