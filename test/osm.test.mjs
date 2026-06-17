@@ -31,6 +31,7 @@ test('elementToContact maps OSM tags to a contact (real fields)', () => {
   assert.equal(c.firstName, 'Northwind Solar');
   assert.equal(c.phone, '+1 415 555 0101');
   assert.equal(c.email, 'hello@northwindsolar.com');
+  assert.equal(c.emailSource, 'directory');
   assert.equal(c.companyDomain, 'northwindsolar.com');
   assert.equal(c.profileUrl, 'https://northwindsolar.com');
   assert.equal(c.city, 'San Diego');

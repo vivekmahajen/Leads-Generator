@@ -26,13 +26,13 @@ async function handler(req, res) {
   });
 
   try {
-    const { contacts, location: resolved } = await findLocalBusinesses(category_id, String(location).trim());
+    const { contacts, scanned, location: resolved } = await findLocalBusinesses(category_id, String(location).trim());
     const results = await ingestContacts(contacts, { userId: user.id, categoryId: category_id });
     await db.scrapeJob.update({
       where: { id: job.id },
       data: { status: 'completed', contactsFound: contacts.length, contactsNew: results.added, completedAt: new Date() },
     });
-    return res.status(200).json({ found: contacts.length, ...results, location: resolved });
+    return res.status(200).json({ withEmail: contacts.length, scanned, ...results, location: resolved });
   } catch (err) {
     await db.scrapeJob.update({ where: { id: job.id }, data: { status: 'failed', errorMessage: err.message, completedAt: new Date() } });
     return res.status(err.status || 502).json({ error: 'LOOKUP_FAILED', message: err.message });

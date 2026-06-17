@@ -10,7 +10,7 @@ const PLATFORM_LABEL = { osm: '📍 Local business', linkedin: '💼 LinkedIn', 
 export default function ContactReview({ categories = [] }) {
   const [contacts, setContacts] = useState([]);
   const [selected, setSelected] = useState(new Set());
-  const [filter, setFilter] = useState({ platform: 'all', minScore: 0, emailStatus: 'all' });
+  const [filter, setFilter] = useState({ platform: 'all', minScore: 0, emailStatus: 'found' });
   const [category, setCategory] = useState(categories[0] || 'real_estate');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function ContactReview({ categories = [] }) {
     setBusy(true); setMsg(''); setError('');
     try {
       const r = await api('/api/scrape/local/search', { method: 'POST', body: { category_id: category, location } });
-      setMsg(`Found ${r.found} real businesses near ${r.location || location} — ${r.added} new, ${r.duplicates} already had.`);
+      setMsg(`Scanned ${r.scanned} businesses near ${r.location || location}; ${r.withEmail} had a public email — ${r.added} new, ${r.duplicates} already had.${r.withEmail === 0 ? ' Try another category or a larger city.' : ''}`);
       await fetchContacts();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
@@ -113,9 +113,9 @@ export default function ContactReview({ categories = [] }) {
           <option value={85}>85+ (Very hot)</option>
         </select>
         <select value={filter.emailStatus} onChange={(e) => setFilter((p) => ({ ...p, emailStatus: e.target.value }))}>
-          <option value="all">Any email status</option>
+          <option value="found">Has email</option>
           <option value="verified">Email verified</option>
-          <option value="found">Email found</option>
+          <option value="all">All (incl. no email)</option>
           <option value="pending">No email yet</option>
         </select>
         {selected.size > 0 && (
