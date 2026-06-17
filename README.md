@@ -108,9 +108,15 @@ so they survive a production install and migrations can run on the host.
 
 | Var | Required |
 |-----|----------|
-| `DATABASE_URL` | yes — a hosted Postgres reachable from the deployment (Neon, Supabase, RDS, Railway…) |
+| `POSTGRES_PRISMA_URL` | yes — pooled connection (runtime). Auto-injected by the Vercel + Supabase integration. |
+| `POSTGRES_URL_NON_POOLING` | yes — direct connection (migrations). Auto-injected by the Vercel + Supabase integration. |
 | `JWT_SECRET` | yes |
 | `NEXT_PUBLIC_APP_URL` | recommended |
+
+> On **Vercel + Supabase**, `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING`
+> are added automatically when you link the database — you only need to add
+> `JWT_SECRET` yourself. For a non-Supabase host, set both Postgres vars to your
+> connection string (see `.env.example`).
 
 After deploying, hit **`/api/health`** — it reports which env vars are missing and
 whether the database is reachable and migrated. On serverless hosts (e.g. Vercel)

@@ -6,7 +6,8 @@ import { db } from '@/lib/db';
 export default async function handler(req, res) {
   const checks = {
     env: {
-      DATABASE_URL: Boolean(process.env.DATABASE_URL),
+      POSTGRES_PRISMA_URL: Boolean(process.env.POSTGRES_PRISMA_URL),
+      POSTGRES_URL_NON_POOLING: Boolean(process.env.POSTGRES_URL_NON_POOLING),
       JWT_SECRET: Boolean(process.env.JWT_SECRET),
       STRIPE_SECRET_KEY: Boolean(process.env.STRIPE_SECRET_KEY), // optional
     },
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
   }
 
   const ok =
-    checks.env.DATABASE_URL &&
+    checks.env.POSTGRES_PRISMA_URL &&
     checks.env.JWT_SECRET &&
     checks.database.connected &&
     checks.database.migrated;
