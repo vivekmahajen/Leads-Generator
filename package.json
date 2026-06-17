@@ -5,7 +5,7 @@
   "description": "LeadForge — AI Lead Generation Platform with category-based pricing",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "prisma migrate deploy && next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
