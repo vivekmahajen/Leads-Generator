@@ -284,6 +284,9 @@ button { font-family: inherit; }
 .kpi-n { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; }
 .kpi-l { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
+.import-note { font-size: 12px; color: var(--muted); margin: -6px 0 16px; }
+.import-note .link-btn { font-size: 12px; }
+
 /* ── DEMO BADGE ───────────────────────────────────────────────── */
 .demo-badge {
   display: inline-block; margin-left: 8px; font-size: 9px; font-weight: 700;

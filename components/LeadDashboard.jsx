@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, getToken, getUser } from '@/lib/client';
 import { getCategory } from '@/lib/categories';
 
@@ -99,6 +99,39 @@ export default function LeadDashboard({ categories = [] }) {
     }
   };
 
+  const fileRef = useRef(null);
+  const [importMsg, setImportMsg] = useState('');
+
+  const onImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file
+    if (!file) return;
+    setGenerating(true);
+    setError('');
+    setImportMsg('');
+    try {
+      const csv = await file.text();
+      // Default category for rows with no category column: current filter, else first selected.
+      const defaultCategory = filter.category !== 'all' ? filter.category : categories[0];
+      const result = await api('/api/leads/import', { method: 'POST', body: { csv, default_category: defaultCategory } });
+      setImportMsg(`Imported ${result.imported} lead${result.imported === 1 ? '' : 's'}${result.skipped ? ` · skipped ${result.skipped} (missing name or email/phone)` : ''}.`);
+      await fetchLeads();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const downloadTemplate = () => {
+    const csv = 'first_name,last_name,email,phone,company_name,job_title,city,state,category,notes\n'
+      + 'Dana,Reed,dana.reed@northwind.com,+14155550101,Northwind Solar,Owner,San Diego,CA,solar_energy,Wants rooftop quote\n';
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'leadforge-import-template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const setF = (k, v) => setFilter((p) => ({ ...p, [k]: v, page: k === 'page' ? v : 1 }));
 
   return (
@@ -141,8 +174,12 @@ export default function LeadDashboard({ categories = [] }) {
           <option value="qualified">Qualified</option>
           <option value="converted">Converted</option>
         </select>
-        <button className="action-btn" onClick={generateSamples} disabled={generating} style={{ marginLeft: 'auto' }}>
-          {generating ? 'Working…' : '✨ Generate leads'}
+        <button className="action-btn" onClick={() => fileRef.current?.click()} disabled={generating} style={{ marginLeft: 'auto' }}>
+          ⬆ Import CSV
+        </button>
+        <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onImportFile} />
+        <button className="action-btn" onClick={generateSamples} disabled={generating}>
+          {generating ? 'Working…' : '✨ Generate demo'}
         </button>
         {stats.total > 0 && (
           <button className="action-btn" onClick={clearLeads} disabled={generating}>🗑 Clear leads</button>
@@ -150,6 +187,13 @@ export default function LeadDashboard({ categories = [] }) {
         <button className="export-btn" style={{ marginLeft: 0 }} onClick={exportCSV}>⬇ Export CSV</button>
       </div>
 
+      <div className="import-note">
+        Real data: <strong>⬆ Import CSV</strong> from Apollo, a list, or anywhere.{' '}
+        <button className="link-btn" onClick={downloadTemplate}>Download template</button>. Rows without a category use{' '}
+        {filter.category !== 'all' ? getCategory(filter.category)?.name : (getCategory(categories[0])?.name || 'your first category')}.
+      </div>
+
+      {importMsg && <div className="form-success">{importMsg}</div>}
       {error && <div className="form-error">{error}</div>}
 
       {leads.some((l) => l.source === 'demo_sample') && (

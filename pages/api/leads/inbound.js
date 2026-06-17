@@ -17,17 +17,7 @@ import { withErrorHandler } from '@/lib/apiHandler';
 import { db } from '@/lib/db';
 import { CATEGORY_MAP } from '@/lib/categories';
 import { rateLimit } from '@/lib/rateLimit';
-
-// A real inbound lead scores on how complete/contactable it is.
-function scoreLead({ email, phone, companyName, jobTitle, notes }) {
-  let score = 35;
-  if (email) score += 15;
-  if (phone) score += 20;
-  if (companyName) score += 15;
-  if (jobTitle) score += 5;
-  if (notes) score += 10;
-  return Math.min(100, score);
-}
+import { scoreLead } from '@/lib/leadScore';
 
 async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
