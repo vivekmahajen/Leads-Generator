@@ -66,6 +66,20 @@ export default function LeadDashboard({ categories = [] }) {
     }
   };
 
+  const clearLeads = async () => {
+    if (typeof window !== 'undefined' && !window.confirm('Delete all leads on your account? This cannot be undone.')) return;
+    setGenerating(true);
+    setError('');
+    try {
+      await api('/api/leads/clear', { method: 'POST' });
+      await fetchLeads();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const setF = (k, v) => setFilter((p) => ({ ...p, [k]: v, page: k === 'page' ? v : 1 }));
 
   return (
@@ -93,7 +107,13 @@ export default function LeadDashboard({ categories = [] }) {
           <option value="qualified">Qualified</option>
           <option value="converted">Converted</option>
         </select>
-        <button className="export-btn" onClick={exportCSV}>⬇ Export CSV</button>
+        <button className="action-btn" onClick={generateSamples} disabled={generating} style={{ marginLeft: 'auto' }}>
+          {generating ? 'Working…' : '✨ Generate leads'}
+        </button>
+        {stats.total > 0 && (
+          <button className="action-btn" onClick={clearLeads} disabled={generating}>🗑 Clear leads</button>
+        )}
+        <button className="export-btn" style={{ marginLeft: 0 }} onClick={exportCSV}>⬇ Export CSV</button>
       </div>
 
       {error && <div className="form-error">{error}</div>}
