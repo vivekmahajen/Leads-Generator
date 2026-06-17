@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { api, getToken } from '@/lib/client';
+import { api, getToken, getUser } from '@/lib/client';
 import { getCategory } from '@/lib/categories';
 
 export default function LeadDashboard({ categories = [] }) {
@@ -11,6 +11,25 @@ export default function LeadDashboard({ categories = [] }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [captureUrl, setCaptureUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const u = getUser();
+    if (u?.id && typeof window !== 'undefined') {
+      setCaptureUrl(`${window.location.origin}/capture/${u.id}`);
+    }
+  }, []);
+
+  const copyCapture = async () => {
+    try {
+      await navigator.clipboard.writeText(captureUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — user can select manually */
+    }
+  };
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -91,6 +110,21 @@ export default function LeadDashboard({ categories = [] }) {
         <div className="kpi"><div className="kpi-n">{stats.converted}</div><div className="kpi-l">Converted</div></div>
         <div className="kpi"><div className="kpi-n">${Number(stats.pipeline).toLocaleString()}</div><div className="kpi-l">Pipeline value</div></div>
       </div>
+
+      {/* Real lead-capture link */}
+      {captureUrl && (
+        <div className="capture-panel">
+          <div>
+            <div className="capture-title">📥 Your real lead-capture link</div>
+            <div className="capture-sub">Put this behind your ads or on your site. Real people who submit land here as new leads.</div>
+            <code className="capture-url">{captureUrl}</code>
+          </div>
+          <div className="capture-actions">
+            <button className="action-btn" onClick={copyCapture}>{copied ? 'Copied ✓' : 'Copy link'}</button>
+            <a className="action-btn" href={captureUrl} target="_blank" rel="noreferrer">Preview form ↗</a>
+          </div>
+        </div>
+      )}
 
       {/* Filters + Export */}
       <div className="lead-filter-bar">

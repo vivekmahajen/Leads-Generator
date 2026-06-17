@@ -284,6 +284,22 @@ button { font-family: inherit; }
 .kpi-n { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; }
 .kpi-l { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
+/* ── CAPTURE PANEL ────────────────────────────────────────────── */
+.capture-panel {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: rgba(99,102,241,0.06); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.capture-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
+.capture-sub { font-size: 12px; color: var(--muted); margin: 2px 0 8px; max-width: 560px; }
+.capture-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; color: var(--accent2); display: inline-block; word-break: break-all;
+}
+.capture-actions { display: flex; gap: 8px; }
+.capture-actions .action-btn { text-decoration: none; }
+
 /* ── LANDING HERO ─────────────────────────────────────────────── */
 .hero { text-align: center; padding: 40px 20px 24px; }
 .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 36px; margin: 0 0 12px; }
