@@ -5,11 +5,14 @@ import { getScoreLabel } from '@/lib/scoring';
 import { getCategory, CATEGORIES } from '@/lib/categories';
 import { parseCSV } from '@/lib/csv';
 
+const PLATFORM_LABEL = { osm: '📍 Local business', linkedin: '💼 LinkedIn', twitter: '𝕏 Twitter' };
+
 export default function ContactReview({ categories = [] }) {
   const [contacts, setContacts] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [filter, setFilter] = useState({ platform: 'all', minScore: 0, emailStatus: 'all' });
   const [category, setCategory] = useState(categories[0] || 'real_estate');
+  const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
@@ -34,11 +37,12 @@ export default function ContactReview({ categories = [] }) {
 
   const toggle = (id) => setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const runTwitter = async () => {
+  const runLocal = async () => {
+    if (!location.trim()) { setError('Enter a location, e.g. "Austin, TX".'); return; }
     setBusy(true); setMsg(''); setError('');
     try {
-      const r = await api('/api/scrape/twitter/search', { method: 'POST', body: { category_id: category } });
-      setMsg(`X search done: ${r.newContacts} new contacts from ${r.found} tweets.${r.errors?.length ? ` (${r.errors.length} query error(s))` : ''}`);
+      const r = await api('/api/scrape/local/search', { method: 'POST', body: { category_id: category, location } });
+      setMsg(`Found ${r.found} real businesses near ${r.location || location} — ${r.added} new, ${r.duplicates} already had.`);
       await fetchContacts();
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
@@ -79,14 +83,15 @@ export default function ContactReview({ categories = [] }) {
     <div className="lead-dashboard">
       <div className="capture-panel">
         <div>
-          <div className="capture-title">Find contacts on LinkedIn &amp; X</div>
-          <div className="capture-sub">Run an X/Twitter intent search, or upload a LinkedIn export (CSV from a Chrome extension / PhantomBuster). Contacts are scored, deduped, and land here for review.</div>
+          <div className="capture-title">Find real businesses — free</div>
+          <div className="capture-sub">Pull real local businesses (name, phone, website, address) from OpenStreetMap by category + location. No API key, no cost. Or upload a LinkedIn export. Everything is scored, deduped, and lands here for review.</div>
         </div>
         <div className="capture-actions" style={{ flexWrap: 'wrap' }}>
           <select className="status-select" value={category} onChange={(e) => setCategory(e.target.value)}>
             {catOptions.map((id) => <option key={id} value={id}>{getCategory(id)?.name || id}</option>)}
           </select>
-          <button className="action-btn" onClick={runTwitter} disabled={busy}>𝕏 Run intent search</button>
+          <input className="cat-search" style={{ minWidth: 160 }} placeholder="City, State" value={location} onChange={(e) => setLocation(e.target.value)} />
+          <button className="action-btn" onClick={runLocal} disabled={busy}>📍 Find businesses</button>
           <button className="action-btn" onClick={() => fileRef.current?.click()} disabled={busy}>💼 Upload LinkedIn CSV</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onUpload} />
         </div>
@@ -97,9 +102,9 @@ export default function ContactReview({ categories = [] }) {
 
       <div className="lead-filter-bar">
         <select value={filter.platform} onChange={(e) => setFilter((p) => ({ ...p, platform: e.target.value }))}>
-          <option value="all">All platforms</option>
+          <option value="all">All sources</option>
+          <option value="osm">📍 Local business</option>
           <option value="linkedin">💼 LinkedIn</option>
-          <option value="twitter">𝕏 Twitter</option>
         </select>
         <select value={filter.minScore} onChange={(e) => setFilter((p) => ({ ...p, minScore: Number(e.target.value) }))}>
           <option value={0}>Any intent</option>
@@ -137,7 +142,7 @@ export default function ContactReview({ categories = [] }) {
                     <div className="lead-company">{[c.jobTitle, c.companyName].filter(Boolean).join(' · ')}</div>
                   </td>
                   <td>
-                    <span className={`platform-pill ${c.sourcePlatform}`}>{c.sourcePlatform === 'linkedin' ? '💼 LinkedIn' : '𝕏 Twitter'}</span>
+                    <span className={`platform-pill ${c.sourcePlatform}`}>{PLATFORM_LABEL[c.sourcePlatform] || c.sourcePlatform}</span>
                     <div className="lead-company">{c.sourceType?.replace(/_/g, ' ')}</div>
                   </td>
                   <td>

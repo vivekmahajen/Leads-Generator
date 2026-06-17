@@ -188,7 +188,7 @@ export default function LeadDashboard({ categories = [] }) {
       </div>
 
       <div className="import-note">
-        Real data: <strong>⬆ Import CSV</strong> from Apollo, a list, or anywhere.{' '}
+        Real data: <strong>⬆ Import CSV</strong> from a list or anywhere, or use <strong>Find contacts</strong> for free businesses.{' '}
         <button className="link-btn" onClick={downloadTemplate}>Download template</button>. Rows without a category use{' '}
         {filter.category !== 'all' ? getCategory(filter.category)?.name : (getCategory(categories[0])?.name || 'your first category')}.
       </div>

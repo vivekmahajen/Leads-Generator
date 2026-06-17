@@ -27,7 +27,7 @@ export default function ContactsPage() {
     <AppShell user={user}>
       <div className="page-head">
         <h1 className="page-title">Find contacts</h1>
-        <p className="page-sub">Pull intent signals from LinkedIn &amp; X, enrich emails, then promote the best to your leads pipeline.</p>
+        <p className="page-sub">Pull real businesses for free (OpenStreetMap) or upload a LinkedIn export, enrich emails, then promote the best to your leads pipeline.</p>
       </div>
       <ContactReview categories={categories} />
     </AppShell>
