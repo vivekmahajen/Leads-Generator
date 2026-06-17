@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildQuery, elementToContact } from '../lib/sources/osm.js';
+import { buildQuery, elementToContact, normalizeState } from '../lib/sources/osm.js';
+
+test('normalizeState maps names/codes to a 2-letter code', () => {
+  assert.equal(normalizeState('California'), 'CA');
+  assert.equal(normalizeState('new york'), 'NY');
+  assert.equal(normalizeState('tx'), 'TX');
+  assert.equal(normalizeState('CA'), 'CA');
+  assert.equal(normalizeState(null), null);
+  assert.equal(normalizeState('Ontario'), 'Ontario'); // unknown → passthrough
+});
 
 test('buildQuery emits tag + keyword selectors within the bbox', () => {
   const q = buildQuery({ south: 1, west: 2, north: 3, east: 4 }, 'real_estate', 50);

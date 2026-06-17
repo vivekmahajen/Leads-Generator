@@ -10,7 +10,8 @@ const PLATFORM_LABEL = { osm: '📍 Local business', linkedin: '💼 LinkedIn', 
 export default function ContactReview({ categories = [] }) {
   const [contacts, setContacts] = useState([]);
   const [selected, setSelected] = useState(new Set());
-  const [filter, setFilter] = useState({ platform: 'all', minScore: 0, emailStatus: 'found' });
+  const [filter, setFilter] = useState({ platform: 'all', minScore: 0, emailStatus: 'found', state: 'all', city: 'all', q: '' });
+  const [facets, setFacets] = useState({ states: [], cities: [] });
   const [category, setCategory] = useState(categories[0] || 'real_estate');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
@@ -23,9 +24,10 @@ export default function ContactReview({ categories = [] }) {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams({ platform: filter.platform, minScore: String(filter.minScore), emailStatus: filter.emailStatus });
+      const params = new URLSearchParams({ platform: filter.platform, minScore: String(filter.minScore), emailStatus: filter.emailStatus, state: filter.state, city: filter.city, q: filter.q });
       const data = await api(`/api/contacts?${params}`);
       setContacts(data.contacts || []);
+      if (data.facets) setFacets(data.facets);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -103,10 +105,19 @@ export default function ContactReview({ categories = [] }) {
       {error && <div className="form-error">{error}</div>}
 
       <div className="lead-filter-bar">
+        <input className="cat-search" style={{ minWidth: 160 }} placeholder="Search name, company, email…" value={filter.q} onChange={(e) => setFilter((p) => ({ ...p, q: e.target.value }))} />
         <select value={filter.platform} onChange={(e) => setFilter((p) => ({ ...p, platform: e.target.value }))}>
           <option value="all">All sources</option>
           <option value="osm">📍 Local business</option>
           <option value="linkedin">💼 LinkedIn</option>
+        </select>
+        <select value={filter.state} onChange={(e) => setFilter((p) => ({ ...p, state: e.target.value }))}>
+          <option value="all">All states</option>
+          {facets.states.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={filter.city} onChange={(e) => setFilter((p) => ({ ...p, city: e.target.value }))}>
+          <option value="all">All cities</option>
+          {facets.cities.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={filter.minScore} onChange={(e) => setFilter((p) => ({ ...p, minScore: Number(e.target.value) }))}>
           <option value={0}>Any intent</option>
@@ -135,7 +146,7 @@ export default function ContactReview({ categories = [] }) {
           <thead>
             <tr>
               <th><input type="checkbox" onChange={(e) => setSelected(e.target.checked ? new Set(contacts.map((c) => c.id)) : new Set())} /></th>
-              <th>Name</th><th>Platform</th><th>Signal</th><th>Email</th><th>Intent</th><th>Profile</th>
+              <th>Name</th><th>Platform</th><th>City</th><th>State</th><th>Email</th><th>Intent</th><th>Profile</th>
             </tr>
           </thead>
           <tbody>
@@ -152,11 +163,8 @@ export default function ContactReview({ categories = [] }) {
                     <span className={`platform-pill ${c.sourcePlatform}`}>{PLATFORM_LABEL[c.sourcePlatform] || c.sourcePlatform}</span>
                     <div className="lead-company">{c.sourceType?.replace(/_/g, ' ')}</div>
                   </td>
-                  <td>
-                    {c.sourceTweetText
-                      ? <div className="tweet-preview" title={c.sourceTweetText}>“{c.sourceTweetText.slice(0, 70)}…”</div>
-                      : <div className="lead-company">{c.sourceKeyword || c.city}</div>}
-                  </td>
+                  <td>{c.city || '—'}</td>
+                  <td>{c.state || '—'}</td>
                   <td>
                     {c.email
                       ? <div><div>{c.email}</div><div className="lead-company">{c.emailSource} · {c.emailVerified ? '✓ verified' : 'unverified'}</div></div>
