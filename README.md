@@ -93,6 +93,30 @@ further **20%** off. See `test/pricing.test.mjs` for the pinned outputs.
 28 cats → Enterprise $199/mo (40% cap)
 ```
 
+## Deploying (auto-deploy from `main`)
+
+The build/start scripts wire up the Prisma lifecycle so a host deploy works:
+
+- `postinstall` → `prisma generate` (client is generated even when the host caches installs)
+- `build` → `prisma generate && next build`
+- `start` → `prisma migrate deploy && next start` (applies migrations on boot)
+
+`@prisma/client` **and** the `prisma` CLI are in `dependencies` (not devDependencies)
+so they survive a production install and migrations can run on the host.
+
+**Required on the host** (set these in the platform's env settings, not a local `.env`):
+
+| Var | Required |
+|-----|----------|
+| `DATABASE_URL` | yes — a hosted Postgres reachable from the deployment (Neon, Supabase, RDS, Railway…) |
+| `JWT_SECRET` | yes |
+| `NEXT_PUBLIC_APP_URL` | recommended |
+
+After deploying, hit **`/api/health`** — it reports which env vars are missing and
+whether the database is reachable and migrated. On serverless hosts (e.g. Vercel)
+where `start` isn't used, run migrations in the build step or once via
+`npx prisma migrate deploy` against `DATABASE_URL`.
+
 ## Tests
 
 ```bash
