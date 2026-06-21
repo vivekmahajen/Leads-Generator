@@ -54,6 +54,24 @@ export default function ChampionLeads() {
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   };
 
+  const pullApi = async () => {
+    if (!cfg.targetProduct.trim()) { setError('Enter a target product to pull from the data API.'); return; }
+    setBusy(true); setError(''); setResult(null);
+    try {
+      const data = await api('/api/champion/pull', {
+        method: 'POST',
+        body: {
+          target_product: cfg.targetProduct,
+          location: [cfg.city, cfg.state].filter(Boolean).join(', '),
+          recency_months: cfg.recencyWindowMonths,
+          volume: cfg.volume,
+          size: cfg.volume,
+        },
+      });
+      setResult(data);
+    } catch (err) { setError(err.message); } finally { setBusy(false); }
+  };
+
   const downloadTemplate = () => {
     const csv = TEMPLATE_HEADERS.join(',') + '\n' + TEMPLATE_ROW.map((c) => (/[",]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(',') + '\n';
     downloadBlob(csv, 'text/csv', 'champion-leads-template.csv');
@@ -82,8 +100,9 @@ export default function ChampionLeads() {
             <input className="form-input" placeholder="Do-not-contact emails (comma)" value={cfg.exEmails} onChange={set('exEmails')} />
           </div>
         </div>
-        <div className="capture-actions">
-          <button className="export-btn" onClick={() => fileRef.current?.click()} disabled={busy}>{busy ? 'Scoring…' : '⬆ Upload candidates CSV'}</button>
+        <div className="capture-actions" style={{ flexWrap: 'wrap' }}>
+          <button className="export-btn" onClick={() => fileRef.current?.click()} disabled={busy}>{busy ? 'Working…' : '⬆ Upload candidates CSV'}</button>
+          <button className="action-btn" onClick={pullApi} disabled={busy} title="Requires PDL_API_KEY">🔗 Pull from data API</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }} onChange={onFile} />
         </div>
       </div>
