@@ -311,6 +311,9 @@ button { font-family: inherit; }
 .score-info      { background: rgba(99,102,241,0.14); color: var(--accent2); }
 .score-secondary { background: rgba(255,255,255,0.06); color: var(--muted); }
 
+.champion-cfg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.champion-cfg .form-input { width: auto; min-width: 130px; flex: 0 1 auto; padding: 8px 10px; font-size: 13px; }
+
 /* ── CAPTURE PANEL ────────────────────────────────────────────── */
 .capture-panel {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;

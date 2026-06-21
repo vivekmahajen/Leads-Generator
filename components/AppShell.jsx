@@ -22,6 +22,7 @@ export default function AppShell({ user, children }) {
         <nav className="app-nav">
           <button className={`nav-link ${pathname === '/' ? 'active' : ''}`} onClick={() => router.push('/')}>Categories</button>
           <button className={`nav-link ${pathname === '/contacts' ? 'active' : ''}`} onClick={() => router.push('/contacts')}>Find contacts</button>
+          <button className={`nav-link ${pathname === '/champion' ? 'active' : ''}`} onClick={() => router.push('/champion')}>Champions</button>
           <button className={`nav-link ${pathname === '/dashboard' ? 'active' : ''}`} onClick={() => router.push('/dashboard')}>Dashboard</button>
           {user && <span className="nav-link">{user.full_name || user.email}</span>}
           <button className="ghost-btn" onClick={logout}>Log out</button>
