@@ -190,8 +190,10 @@ steps; replies/bounces/unsubscribes auto-update lead status.
 **Sender options:**
 - **Gmail SMTP (free, low-volume/warm):** set `GMAIL_USER` + `GMAIL_APP_PASSWORD`
   (a Google *App Password*). No domain purchase. Gmail limits apply (~500/day free,
-  ~2,000/day Workspace) and Gmail has **no reply/bounce webhooks** — the auto-status
-  loop needs an ESP (below) or a future Gmail inbox poller.
+  ~2,000/day Workspace). Gmail has no webhooks, so a second cron
+  (`/api/cron/poll-gmail`, every 15 min) polls the inbox over IMAP with the same
+  app password and auto-updates status from replies (In-Reply-To match) and
+  bounces (mailer-daemon/DSN) — restoring the full auto-status loop on Gmail.
 - **ESP + dedicated domain (cold volume):** best deliverability + the reply/bounce
   webhooks that drive auto-status. Resend has a free tier (3k/mo).
 
