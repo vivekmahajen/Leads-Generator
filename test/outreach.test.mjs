@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import { renderTemplate, withComplianceFooter } from '../lib/outreach/render.js';
 import { makeUnsubToken, verifyUnsubToken } from '../lib/outreach/token.js';
 import { regionOf, isRestrictedRegion, enrollableEmail } from '../lib/outreach/policy.js';
+import { outreachDomain, gmailConfigured } from '../lib/outreach/sender.js';
+
+test('Gmail sender: domain derives from GMAIL_USER when set', () => {
+  const prev = { u: process.env.GMAIL_USER, p: process.env.GMAIL_APP_PASSWORD, d: process.env.OUTREACH_FROM_DOMAIN };
+  delete process.env.OUTREACH_FROM_DOMAIN;
+  process.env.GMAIL_USER = 'me@acme.com';
+  process.env.GMAIL_APP_PASSWORD = 'x'.repeat(16);
+  assert.equal(gmailConfigured(), true);
+  assert.equal(outreachDomain(), 'acme.com');
+  process.env.GMAIL_USER = prev.u || ''; process.env.GMAIL_APP_PASSWORD = prev.p || '';
+  if (prev.d) process.env.OUTREACH_FROM_DOMAIN = prev.d;
+  if (!prev.u) delete process.env.GMAIL_USER;
+});
 
 test('renderTemplate fills merge fields', () => {
   const lead = { firstName: 'Dana', companyName: 'Northwind', city: 'Austin' };

@@ -187,7 +187,15 @@ steps; replies/bounces/unsubscribes auto-update lead status.
   hard bounce → suppressed **and replacement-eligible**;
 - daily/monthly **send caps** + business-hours throttle; EU/UK/India leads flagged (no opt-out basis).
 
-**Required DNS / env — outreach MUST send from a separate domain** from the app's
+**Sender options:**
+- **Gmail SMTP (free, low-volume/warm):** set `GMAIL_USER` + `GMAIL_APP_PASSWORD`
+  (a Google *App Password*). No domain purchase. Gmail limits apply (~500/day free,
+  ~2,000/day Workspace) and Gmail has **no reply/bounce webhooks** — the auto-status
+  loop needs an ESP (below) or a future Gmail inbox poller.
+- **ESP + dedicated domain (cold volume):** best deliverability + the reply/bounce
+  webhooks that drive auto-status. Resend has a free tier (3k/mo).
+
+**When using an ESP, it MUST send from a separate domain** from the app's
 transactional/OTP domain, or cold-email reputation will sink OTP deliverability:
 
 | Var | Purpose |
