@@ -54,6 +54,22 @@ async function handler(req, res) {
     db.leadDelivery.count({ where }),
   ]);
 
+  // Attach each lead's most-relevant enrollment (active preferred) for visibility.
+  const enrollments = await db.enrollment.findMany({
+    where: { leadId: { in: deliveries.map((d) => d.id) } },
+    include: { sequence: { select: { name: true } }, messages: { orderBy: { createdAt: 'desc' }, take: 1 } },
+  });
+  const enrByLead = new Map();
+  for (const e of enrollments) {
+    const prev = enrByLead.get(e.leadId);
+    if (!prev || (e.status === 'active' && prev.status !== 'active')) enrByLead.set(e.leadId, e);
+  }
+  const enrollmentOf = (id) => {
+    const e = enrByLead.get(id);
+    if (!e) return null;
+    return { sequence: e.sequence?.name, step: e.currentStep + 1, status: e.status, last_outcome: e.messages[0]?.status || null };
+  };
+
   // Flatten delivery + lead into the shape the dashboard expects
   const leads = deliveries.map((d) => ({
     id: d.id,
@@ -71,6 +87,7 @@ async function handler(req, res) {
     source: d.lead?.source,
     status: d.status,
     delivered_at: d.deliveredAt,
+    enrollment: enrollmentOf(d.id),
   }));
 
   // Aggregate stats (across all of the user's deliveries, not just this page)

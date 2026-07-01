@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // Vercel + Supabase integration provides these. POSTGRES_PRISMA_URL is the
   // pooled (pgbouncer) connection used at runtime; POSTGRES_URL_NON_POOLING is
   // the direct connection Prisma uses for migrations. For a plain/local setup,
@@ -40,6 +40,9 @@ model User {
   rawContacts    RawContact[]
   scrapeJobs     ScrapeJob[]
   savedSearches  SavedSearch[]
+  sequences      Sequence[]
+  enrollments    Enrollment[]
+  suppressions   Suppression[]
 
   @@map("users")
 }
@@ -82,21 +85,23 @@ model UserCategory {
 }
 
 model Lead {
-  id                String   @id @default(uuid()) @db.Uuid
-  categoryId        String   @map("category_id") @db.VarChar(50)
-  firstName         String?  @map("first_name") @db.VarChar(100)
-  lastName          String?  @map("last_name") @db.VarChar(100)
-  email             String?  @db.VarChar(255)
-  phone             String?  @db.VarChar(15)
-  companyName       String?  @map("company_name") @db.VarChar(100)
-  jobTitle          String?  @map("job_title") @db.VarChar(100)
-  city              String?  @db.VarChar(50)
-  state             String?  @db.VarChar(50)
-  country           String?  @default("IN") @db.VarChar(50)
-  qualificationData Json?    @map("qualification_data")
-  intentScore       Int?     @map("intent_score")
-  source            String?  @db.VarChar(50)
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                String    @id @default(uuid()) @db.Uuid
+  categoryId        String    @map("category_id") @db.VarChar(50)
+  firstName         String?   @map("first_name") @db.VarChar(100)
+  lastName          String?   @map("last_name") @db.VarChar(100)
+  email             String?   @db.VarChar(255)
+  phone             String?   @db.VarChar(15)
+  companyName       String?   @map("company_name") @db.VarChar(100)
+  jobTitle          String?   @map("job_title") @db.VarChar(100)
+  city              String?   @db.VarChar(50)
+  state             String?   @db.VarChar(50)
+  country           String?   @default("IN") @db.VarChar(50)
+  qualificationData Json?     @map("qualification_data")
+  intentScore       Int?      @map("intent_score")
+  source            String?   @db.VarChar(50)
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  emailCheckedAt    DateTime? @map("email_checked_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   deliveries LeadDelivery[]
 
@@ -114,8 +119,9 @@ model LeadDelivery {
   replacementRequested Boolean  @default(false) @map("replacement_requested")
   notes                String?
 
-  lead Lead @relation(fields: [leadId], references: [id])
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead        Lead         @relation(fields: [leadId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
 
   @@map("lead_deliveries")
 }
@@ -136,44 +142,44 @@ model PasswordReset {
 // ── LinkedIn / X extraction pipeline ──────────────────────────────
 
 model RawContact {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String?   @map("user_id") @db.Uuid
-  sourcePlatform   String    @map("source_platform") @db.VarChar(20) // 'linkedin' | 'twitter'
-  sourceType       String    @map("source_type") @db.VarChar(40)
+  id             String  @id @default(uuid()) @db.Uuid
+  userId         String? @map("user_id") @db.Uuid
+  sourcePlatform String  @map("source_platform") @db.VarChar(20) // 'linkedin' | 'twitter'
+  sourceType     String  @map("source_type") @db.VarChar(40)
 
-  fullName         String?   @map("full_name") @db.VarChar(150)
-  firstName        String?   @map("first_name") @db.VarChar(80)
-  lastName         String?   @map("last_name") @db.VarChar(80)
-  profileUrl       String?   @map("profile_url") @db.VarChar(500)
-  username         String?   @db.VarChar(100)
-  headline         String?
-  companyName      String?   @map("company_name") @db.VarChar(150)
-  companyDomain    String?   @map("company_domain") @db.VarChar(200)
-  jobTitle         String?   @map("job_title") @db.VarChar(150)
+  fullName      String? @map("full_name") @db.VarChar(150)
+  firstName     String? @map("first_name") @db.VarChar(80)
+  lastName      String? @map("last_name") @db.VarChar(80)
+  profileUrl    String? @map("profile_url") @db.VarChar(500)
+  username      String? @db.VarChar(100)
+  headline      String?
+  companyName   String? @map("company_name") @db.VarChar(150)
+  companyDomain String? @map("company_domain") @db.VarChar(200)
+  jobTitle      String? @map("job_title") @db.VarChar(150)
 
-  city             String?   @db.VarChar(80)
-  state            String?   @db.VarChar(80)
-  country          String?   @db.VarChar(80)
+  city    String? @db.VarChar(80)
+  state   String? @db.VarChar(80)
+  country String? @db.VarChar(80)
 
-  sourcePostUrl    String?   @map("source_post_url") @db.VarChar(500)
-  sourceKeyword    String?   @map("source_keyword") @db.VarChar(200)
-  sourceTweetText  String?   @map("source_tweet_text")
+  sourcePostUrl   String? @map("source_post_url") @db.VarChar(500)
+  sourceKeyword   String? @map("source_keyword") @db.VarChar(200)
+  sourceTweetText String? @map("source_tweet_text")
 
-  email            String?   @db.VarChar(255)
-  emailVerified    Boolean   @default(false) @map("email_verified")
-  emailSource      String?   @map("email_source") @db.VarChar(30)
-  phone            String?   @db.VarChar(30)
-  linkedinUrl      String?   @map("linkedin_url") @db.VarChar(500)
-  twitterUrl       String?   @map("twitter_url") @db.VarChar(500)
+  email         String? @db.VarChar(255)
+  emailVerified Boolean @default(false) @map("email_verified")
+  emailSource   String? @map("email_source") @db.VarChar(30)
+  phone         String? @db.VarChar(30)
+  linkedinUrl   String? @map("linkedin_url") @db.VarChar(500)
+  twitterUrl    String? @map("twitter_url") @db.VarChar(500)
 
-  enrichmentStatus String    @default("pending") @map("enrichment_status") @db.VarChar(20)
-  intentScore      Int       @default(0) @map("intent_score")
-  categoryId       String?   @map("category_id") @db.VarChar(50)
+  enrichmentStatus String  @default("pending") @map("enrichment_status") @db.VarChar(20)
+  intentScore      Int     @default(0) @map("intent_score")
+  categoryId       String? @map("category_id") @db.VarChar(50)
 
-  scrapedAt        DateTime  @default(now()) @map("scraped_at") @db.Timestamptz(6)
-  enrichedAt       DateTime? @map("enriched_at") @db.Timestamptz(6)
-  promotedToLead   Boolean   @default(false) @map("promoted_to_lead")
-  promotedAt       DateTime? @map("promoted_at") @db.Timestamptz(6)
+  scrapedAt      DateTime  @default(now()) @map("scraped_at") @db.Timestamptz(6)
+  enrichedAt     DateTime? @map("enriched_at") @db.Timestamptz(6)
+  promotedToLead Boolean   @default(false) @map("promoted_to_lead")
+  promotedAt     DateTime? @map("promoted_at") @db.Timestamptz(6)
 
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrichmentLogs EnrichmentLog[]
@@ -226,17 +232,104 @@ model SavedSearch {
 }
 
 model EnrichmentLog {
-  id          String    @id @default(uuid()) @db.Uuid
-  service     String    @db.VarChar(20)
-  creditsUsed Int       @default(0) @map("credits_used")
-  creditsLimit Int?     @map("credits_limit")
-  periodStart DateTime? @map("period_start") @db.Date
-  contactId   String?   @map("contact_id") @db.Uuid
-  result      String?   @db.VarChar(20)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String    @id @default(uuid()) @db.Uuid
+  service      String    @db.VarChar(20)
+  creditsUsed  Int       @default(0) @map("credits_used")
+  creditsLimit Int?      @map("credits_limit")
+  periodStart  DateTime? @map("period_start") @db.Date
+  contactId    String?   @map("contact_id") @db.Uuid
+  result       String?   @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   contact RawContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
   @@index([service, createdAt])
   @@map("enrichment_log")
+}
+
+// ── Outreach layer (email sequences) ──────────────────────────────
+
+model Sequence {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  name          String   @db.VarChar(120)
+  status        String   @default("draft") @db.VarChar(20) // draft | active | archived
+  fromName      String   @map("from_name") @db.VarChar(120)
+  fromEmail     String   @map("from_email") @db.VarChar(255)
+  footerAddress String?  @map("footer_address") // physical mailing address (CAN-SPAM)
+  region        String?  @db.VarChar(10) // default region assumption (US/EU/IN)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps       SequenceStep[]
+  enrollments Enrollment[]
+
+  @@index([userId])
+  @@map("sequences")
+}
+
+model SequenceStep {
+  id         String @id @default(uuid()) @db.Uuid
+  sequenceId String @map("sequence_id") @db.Uuid
+  stepOrder  Int    @map("step_order")
+  delayHours Int    @default(0) @map("delay_hours")
+  subject    String
+  body       String
+
+  sequence Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@unique([sequenceId, stepOrder])
+  @@map("sequence_steps")
+}
+
+model Enrollment {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  leadId      String    @map("lead_id") @db.Uuid // LeadDelivery id (dashboard lead)
+  sequenceId  String    @map("sequence_id") @db.Uuid
+  status      String    @default("active") @db.VarChar(20) // active|paused|replied|bounced|unsubscribed|completed
+  currentStep Int       @default(0) @map("current_step")
+  nextSendAt  DateTime? @map("next_send_at") @db.Timestamptz(6)
+  claimedAt   DateTime? @map("claimed_at") @db.Timestamptz(6) // send-loop claim lock
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead     LeadDelivery      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sequence Sequence          @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  messages OutreachMessage[]
+
+  @@unique([leadId, sequenceId])
+  @@index([status, nextSendAt])
+  @@map("enrollments")
+}
+
+model OutreachMessage {
+  id                String    @id @default(uuid()) @db.Uuid
+  enrollmentId      String    @map("enrollment_id") @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  stepOrder         Int       @map("step_order")
+  providerMessageId String?   @unique @map("provider_message_id")
+  status            String    @default("queued") @db.VarChar(20) // queued|sent|delivered|opened|replied|bounced|failed
+  toEmail           String?   @map("to_email") @db.VarChar(255)
+  error             String?
+  sentAt            DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
+  @@map("outreach_messages")
+}
+
+model Suppression {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  email     String   @db.VarChar(255)
+  reason    String   @db.VarChar(20) // unsubscribed | bounced | complained | manual
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@map("suppressions")
 }

@@ -172,6 +172,35 @@ feature degrades with a clear message when missing.
 > Only `Generate demo` is fake. Imported, Apollo-fetched, and captured leads are
 > real and are never DEMO-badged.
 
+## Outreach (email sequences)
+
+Closes the loop from lead → first touch, in-product. **Sequences** page: build
+multi-step cadences; enroll leads from the dashboard (multi-select → "Add to
+sequence"). A Vercel Cron (`/api/cron/send-sequences`, every 5 min) sends due
+steps; replies/bounces/unsubscribes auto-update lead status.
+
+**Compliance is enforced on every send** (not optional):
+- one-click, tokenized **unsubscribe** + **physical address** footer on every email;
+- **suppression check before every send**; unsubscribe/complaint/bounce → suppressed;
+- sends only to **verified/deliverable, non-suppressed** addresses (guessed emails skipped);
+- **stop-on-reply / bounce / unsubscribe / complaint**; reply → lead auto-qualifies,
+  hard bounce → suppressed **and replacement-eligible**;
+- daily/monthly **send caps** + business-hours throttle; EU/UK/India leads flagged (no opt-out basis).
+
+**Required DNS / env — outreach MUST send from a separate domain** from the app's
+transactional/OTP domain, or cold-email reputation will sink OTP deliverability:
+
+| Var | Purpose |
+|-----|---------|
+| `OUTREACH_FROM_DOMAIN` | dedicated subdomain, e.g. `mail.yourbrand.com` |
+| `OUTREACH_EMAIL_API_KEY` | ESP key for that domain (Resend/SES/Postmark) |
+| `OUTREACH_WEBHOOK_SECRET` | shared secret for the reply/bounce webhook (`/api/outreach/inbound`) |
+| `CRON_SECRET` | protects the send-scheduler cron |
+
+Configure **SPF, DKIM, and DMARC** on `OUTREACH_FROM_DOMAIN`. Point your ESP's
+reply/bounce/complaint events at `POST /api/outreach/inbound`. Without an ESP key,
+sends are console-logged in dev (the full pipeline still runs).
+
 ## Tests
 
 ```bash

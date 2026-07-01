@@ -14,6 +14,27 @@ export default function LeadDashboard({ categories = [] }) {
   const [generating, setGenerating] = useState(false);
   const [captureUrl, setCaptureUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sequences, setSequences] = useState([]);
+  const [selected, setSelected] = useState(new Set());
+  const [seqId, setSeqId] = useState('');
+
+  useEffect(() => {
+    api('/api/sequences').then((d) => setSequences((d.sequences || []).filter((s) => s.status !== 'archived'))).catch(() => {});
+  }, []);
+
+  const toggleSel = (id) => setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const enrollSelected = async () => {
+    if (!seqId || !selected.size) { setError('Pick a sequence and select leads first.'); return; }
+    setGenerating(true); setError(''); setImportMsg('');
+    try {
+      const r = await api(`/api/sequences/${seqId}/enroll`, { method: 'POST', body: { lead_ids: [...selected] } });
+      const reasons = r.skipped?.length ? ` Skipped ${r.skipped.length}: ${[...new Set(r.skipped.map((s) => s.reason))].join('; ')}.` : '';
+      setImportMsg(`Enrolled ${r.enrolled} lead(s) into the sequence.${reasons}`);
+      setSelected(new Set());
+      await fetchLeads();
+    } catch (err) { setError(err.message); } finally { setGenerating(false); }
+  };
 
   useEffect(() => {
     const u = getUser();
@@ -207,6 +228,17 @@ export default function LeadDashboard({ categories = [] }) {
         <button className="export-btn" style={{ marginLeft: 0 }} onClick={exportCSV}>⬇ Export CSV</button>
       </div>
 
+      {/* Enroll to sequence */}
+      <div className="lead-filter-bar" style={{ marginTop: -6 }}>
+        <span className="page-sub">{selected.size} selected</span>
+        <select value={seqId} onChange={(e) => setSeqId(e.target.value)}>
+          <option value="">Choose a sequence…</option>
+          {sequences.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <button className="action-btn" onClick={enrollSelected} disabled={generating || !selected.size || !seqId}>✉ Add {selected.size || ''} to sequence</button>
+        {!sequences.length && <span className="page-sub">No sequences yet — build one in <strong>Sequences</strong>.</span>}
+      </div>
+
       <div className="import-note">
         Real data: <strong>⬆ Import CSV</strong> from a list or anywhere, or use <strong>Find contacts</strong> for free businesses.{' '}
         <button className="link-btn" onClick={downloadTemplate}>Download template</button>. Rows without a category use{' '}
@@ -228,6 +260,7 @@ export default function LeadDashboard({ categories = [] }) {
         <table className="lead-table">
           <thead>
             <tr>
+              <th><input type="checkbox" checked={leads.length > 0 && selected.size === leads.length} onChange={(e) => setSelected(e.target.checked ? new Set(leads.map((l) => l.id)) : new Set())} /></th>
               <th>Lead</th>
               <th>Category</th>
               <th>Contact</th>
@@ -242,6 +275,7 @@ export default function LeadDashboard({ categories = [] }) {
           <tbody>
             {leads.map((lead) => (
               <tr key={lead.id}>
+                <td><input type="checkbox" checked={selected.has(lead.id)} onChange={() => toggleSel(lead.id)} /></td>
                 <td>
                   <div className="lead-name">
                     {lead.first_name} {lead.last_name}
@@ -270,6 +304,9 @@ export default function LeadDashboard({ categories = [] }) {
                     <option value="converted">Converted ✓</option>
                     <option value="rejected">Not relevant</option>
                   </select>
+                  {lead.enrollment && (
+                    <div className="lead-company" title={`Sequence: ${lead.enrollment.sequence}`}>✉ {lead.enrollment.sequence} · step {lead.enrollment.step} · {lead.enrollment.status}{lead.enrollment.last_outcome ? ` (${lead.enrollment.last_outcome})` : ''}</div>
+                  )}
                 </td>
                 <td>
                   <button className="action-btn" onClick={() => requestReplacement(lead.id)}>Replace</button>
