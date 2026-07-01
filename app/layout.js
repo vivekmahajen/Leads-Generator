@@ -1,8 +1,12 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'LeadForge — AI Lead Generation Platform',
-  description: 'Qualified leads across 28 industries. Pick your categories, pricing adapts in real-time.',
+  metadataBase: new URL((process.env.NEXT_PUBLIC_APP_URL || 'https://leadforge.app').replace(/\/$/, '')),
+  title: {
+    default: 'LeadForge — the leads the big databases miss',
+    template: '%s',
+  },
+  description: 'Local & vertical B2B leads — sourced live, email-verified, sequenced in-product, and replacement-guaranteed.',
 };
 
 export default function RootLayout({ children }) {
